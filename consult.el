@@ -1209,17 +1209,25 @@ FACE is the cursor face."
 
 See `consult--with-preview' for the arguments PREVIEW-KEY, STATE, TRANSFORM
 and CANDIDATE."
-  (let ((input "") (selected) (timer))
+  (let* ((input "") (selected) (timer)
+         (buf (car (seq-filter
+                    (lambda (b)
+                      (not (minibufferp b)))
+                    (buffer-list))))
+         (buf-window (get-buffer-window buf)))
     (consult--minibuffer-with-setup-hook
         (if (and state preview-key)
             (lambda ()
               (setq consult--preview-function
                     (let ((last-preview))
+                      (message "B %s" buf)
+                      (message "BW %s" buf-window)
                       (lambda ()
                         (when-let (cand (funcall candidate))
                           (with-selected-window (active-minibuffer-window)
                             (let ((input (minibuffer-contents-no-properties)))
-                              (with-selected-window (or (minibuffer-selected-window) (next-window))
+                              (with-selected-window (or ;(minibuffer-selected-window)
+                                                     (next-window buf-window))
                                 (let ((transformed (funcall transform input cand))
                                       (new-preview (cons input cand)))
                                   (when-let (debounce (consult--preview-key-pressed-p preview-key transformed))
