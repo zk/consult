@@ -1209,25 +1209,26 @@ FACE is the cursor face."
 
 See `consult--with-preview' for the arguments PREVIEW-KEY, STATE, TRANSFORM
 and CANDIDATE."
-  (let* ((input "") (selected) (timer)
-         (buf (car (seq-filter
-                    (lambda (b)
-                      (not (minibufferp b)))
-                    (buffer-list))))
-         (buf-window (get-buffer-window buf)))
+  (let* ((input "") (selected) (timer))
     (consult--minibuffer-with-setup-hook
         (if (and state preview-key)
             (lambda ()
               (setq consult--preview-function
                     (let ((last-preview))
-                      (message "B %s" buf)
-                      (message "BW %s" buf-window)
                       (lambda ()
                         (when-let (cand (funcall candidate))
                           (with-selected-window (active-minibuffer-window)
-                            (let ((input (minibuffer-contents-no-properties)))
+                            (let ((input (minibuffer-contents-no-properties))
+                                  (show-win (car
+                                             (seq-filter
+                                              (lambda (w)
+                                                (not (minibufferp (window-buffer w))))
+                                              (window-list)))))
+                              ;(message "WL %s" (window-list))
+                              ;(message "WL2 %s" show-win)
                               (with-selected-window (or ;(minibuffer-selected-window)
-                                                     (next-window buf-window))
+                                                     ;(next-window
+                                                     show-win)
                                 (let ((transformed (funcall transform input cand))
                                       (new-preview (cons input cand)))
                                   (when-let (debounce (consult--preview-key-pressed-p preview-key transformed))
